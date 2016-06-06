@@ -41,7 +41,6 @@ import at.pavlov.cannons.dao.CannonBean;
 import at.pavlov.cannons.dao.MyDatabase;
 import at.pavlov.cannons.dao.PersistenceDatabase;
 import at.pavlov.cannons.projectile.Projectile;
-import org.mcstats.MetricsLite;
 
 public final class Cannons extends JavaPlugin
 {
@@ -165,13 +164,6 @@ public final class Cannons extends JavaPlugin
 					persistenceDatabase.saveAllCannonsAsync();
 				}
 			}, 6000L, 6000L);
-			
-			try {
-			    MetricsLite metrics = new MetricsLite(this);
-			    metrics.start();
-			} catch (IOException e) {
-			    // Failed to submit the stats :-(
-			}
 
             logDebug("Time to enable cannons: " + new DecimalFormat("0.00").format((System.nanoTime() - startTime)/1000000.0) + "ms");
 
