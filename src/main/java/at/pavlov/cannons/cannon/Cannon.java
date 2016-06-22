@@ -67,6 +67,9 @@ public class Cannon
     // pushing a projectile into the barrel after loading the projectile
     private int projectilePushed;
 
+    // was the cannon fee paid
+    private boolean paid;
+
     // angles
     private double horizontalAngle;
     private double verticalAngle;
@@ -87,6 +90,11 @@ public class Cannon
     private long sentryLastLoadingFailed;
     // last time firing failed. Wait some time before trying again
     private long sentryLastFiringFailed;
+
+    //target options for cannon
+    private boolean targetMob;
+    private boolean targetPlayer;
+    private boolean targetCannon;
 
     //observer will see the impact of the target predictor
     //<Player name, remove after showing impact>
@@ -133,6 +141,8 @@ public class Cannon
         this.owner = owner;
         this.isValid = true;
         this.cannonName = null;
+        // ignore if there is no fee
+        this.paid = design.getEconomyBuildingCost() <= 0;
 
         //the cannon is not moving
         this.velocity = new Vector(0, 0, 0);
@@ -164,6 +174,10 @@ public class Cannon
         // set temperature
         this.tempValue = 0.0;
         this.tempTimestamp = 0;
+        
+        this.targetMob = true;
+        this.targetPlayer = false;
+        this.targetCannon = false;
 
         this.databaseId = UUID.randomUUID();
     }
@@ -2390,5 +2404,50 @@ public class Cannon
 
     public void setLastWhitelisted(UUID lastWhitelisted) {
         this.lastWhitelisted = lastWhitelisted;
+    }
+
+    public boolean isTargetMob() {
+        return targetMob;
+    }
+
+    public void setTargetMob(boolean targetMob) {
+        this.targetMob = targetMob;
+    }
+
+    public void toggleTargetMob(){
+        this.targetMob = !this.targetMob;
+    }
+
+    public boolean isTargetPlayer() {
+        return targetPlayer;
+    }
+
+    public void setTargetPlayer(boolean targetPlayer) {
+        this.targetPlayer = targetPlayer;
+    }
+
+    public void toggleTargetPlayer(){
+        this.targetPlayer = !this.targetPlayer;
+    }
+
+    public boolean isTargetCannon() {
+        return targetCannon;
+    }
+
+    public void setTargetCannon(boolean targetCannon) {
+        this.targetCannon = targetCannon;
+    }
+
+    public void toggleTargetCannon(){
+        this.targetCannon = !this.targetCannon;
+    }
+
+
+    public boolean isPaid() {
+        return paid;
+    }
+
+    public void setPaid(boolean paid) {
+        this.paid = paid;
     }
 }

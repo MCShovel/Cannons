@@ -17,6 +17,8 @@ Error:
   DismantlingNotOwner: 'RED [Cannons] Nur der Besitzer kann eine Kanone abbauen.'
   MissingSign: 'RED [Cannons] Diese CANNON benötigt ein Sign um zu funktioinieren.'
   NoMoney: 'RED [Cannons] Du brauchst mindestens BUILD_COSTS um diese Kanone zu erstellen.'
+  NotPaid: "RED [Cannons] Die Kanonenabgabe wurde noch nicht bezahlt. Verwende GOLD '/cannons buy' RED um diese CANNON für GOLD BUILD_COSTS zu kaufen"
+  AlreadyPaid: 'RED [Cannons] Die Kanonenabgabe wurde für diese Kanone bereits bezahlt'
   PlayerNotFound: 'RED [Cannons] Spielername nicht vorhanden.'
 
 
@@ -26,6 +28,11 @@ Commands:
   CannonNotFound: 'RED [Cannons] Kanone existiert nicht.'
   AddedWhitelist: 'GREEN [Cannons] LASTWHITELISTED zur whitelist von CANNON hinzugefügt'
   RemovedWhitelist: 'GREEN [Cannons] LASTWHITELISTED von whitelist entfernt'
+  ToggledTargetMob: 'GOLD [Cannons] Sentry erkennt Monster als Ziel: TARGET_MOB'
+  ToggledTargetPlayer: 'GOLD [Cannons] Sentry erkennt Spieler als Ziel: TARGET_PLAYER'
+  ToggledTargetCannon: 'GOLD [Cannons] Sentry erkennt Kanonen als Ziel: TARGET_CANNON'
+  BuyCannon: 'YELLOW [Cannons] Klicke die Kanone um sie zu kaufen.'
+  PaidCannon: 'GREEN [Cannons] Kanonenabgabe bezahlt. GOLD BUILD_COSTS GREEN wurde von deinem Konto abgebucht.'
 
 
 Aiming:
@@ -63,6 +70,10 @@ Cannon:
     NEWLINE YELLOW Projektil: GOLD PROJECTILE
     NEWLINE YELLOW Russ: GOLD SOOT
     NEWLINE YELLOW Ausrichtung H/V: GOLD HDEGREE YELLOW / GOLD VDEGREE
+    -SENTRY-INFORMATION-
+    NEWLINE YELLOW Zielerfassung Monster: TARGET_MOB
+    NEWLINE YELLOW Zielerfassung Spieler: TARGET_PLAYER
+    NEWLINE YELLOW Zielerfassung Kanonen: TARGET_CANNON
     NEWLINE YELLOW Whitelist: WHITELIST '
   RenameSuccess: 'GREEN [Cannons] Die Kanone wurde umbenannt in GOLD CANNON_NAME.'
   RenameFail: 'RED [Cannons] Der Name für die Kanone ist nicht einzigartig.'

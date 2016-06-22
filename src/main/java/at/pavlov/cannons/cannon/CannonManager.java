@@ -163,6 +163,7 @@ public class CannonManager
 
         long delay = 0;
         if (cause == BreakCause.Dismantling || cause == BreakCause.Other) {
+            plugin.logDebug("Dismantling," + cannon.getCannonDesign().getSoundDismantle().toString());
             CannonsUtil.playSound(cannon.getRandomBarrelBlock(), cannon.getCannonDesign().getSoundDismantle());
             delay = (long) (cannon.getCannonDesign().getDismantlingDelay()*20.0);
         }
@@ -204,7 +205,8 @@ public class CannonManager
                                 funds = cannon.getCannonDesign().getEconomyDestructionRefund();
                                 break;
                         }
-                        plugin.getEconomy().depositPlayer(offplayer, funds);
+                        if (cannon.isPaid())
+                            plugin.getEconomy().depositPlayer(offplayer, funds);
                     }
                 }
 
@@ -310,6 +312,10 @@ public class CannonManager
 			plugin.logInfo("can't save a cannon when the owner is null");
 			return;
 		}
+
+        //ignore paid if there is no economy
+        if (plugin.getEconomy() == null || cannon.getCannonDesign().getEconomyBuildingCost() <= 0)
+            cannon.setPaid(true);
 
         //add owner to whitelist for sentry
         if (cannon.getCannonDesign().isSentry())
@@ -523,13 +529,6 @@ public class CannonManager
                 //if a sign is required to operate the cannon, there must be at least one sign
                 if (message == MessageEnum.CannonCreated && (cannon.getCannonDesign().isSignRequired() && !cannon.hasCannonSign()))
                     message = MessageEnum.ErrorMissingSign;
-
-                //if a sign is required to operate the cannon, there must be at least one sign
-                if (message == MessageEnum.CannonCreated && plugin.getEconomy() != null && cannon.getCannonDesign().getEconomyBuildingCost() > 0) {
-                    EconomyResponse r = plugin.getEconomy().withdrawPlayer(player, cannon.getCannonDesign().getEconomyBuildingCost());
-                    if (!r.transactionSuccess())
-                        message = MessageEnum.ErrorNoMoney;
-                }
 
                 CannonBeforeCreateEvent cbceEvent = new CannonBeforeCreateEvent(cannon, message, player.getUniqueId());
                 Bukkit.getServer().getPluginManager().callEvent(cbceEvent);

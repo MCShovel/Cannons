@@ -252,17 +252,19 @@ allowedProjectiles:
 sounds:
   #sound effects for this cannon.
   #You can enter new sounds in the following way 'NAME:VOLUME:PITCH'. Like 'IRONGOLEM_WALK:1:0.5'
-  #NAME: You can find valid names here: http://jd.bukkit.org/rb/apidocs/org/bukkit/Sound.html
+  #NAME: You can find valid names here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html
   #VOLUME: How far you will hear this sound
   #PITCH: How fast it is played. (0.5-2)
   #USE: 'none:1:1' to disable this sound
 
   #creating a new cannon
   create: 'BLOCK_ANVIL_LAND:1:0.5'
+  #paying the cannon fee of a new cannon
+  selected: 'BLOCK_ANVIL_LAND:1:2'
   #destroying a cannon
   destroy: 'ENTITY_ZOMBIE_ATTACK_IRON_DOOR:1:0.5'
   #dismantling a cannon
-  dismantle: 'BLOCK_ANVIL_BREAK:1:0.5'
+  dismantle: 'BLOCK_ANVIL_USE:1:0.5'
   #changing the angle of a cannon
   adjust: 'ENTITY_IRONGOLEM_STEP:1:0.5'
   #fuse igniting sound when firing
