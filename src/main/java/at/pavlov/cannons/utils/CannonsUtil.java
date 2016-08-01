@@ -25,6 +25,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.Button;
 import org.bukkit.material.Torch;
+import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionType;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 
@@ -860,5 +864,125 @@ public class CannonsUtil
            }
         }
         return null;
+    }
+
+    /**
+     * returns true if the player is playing or has been on this server before
+     * @param uuid id if the player
+     * @return true if player has played before
+     */
+    public static boolean hasPlayedBefore(UUID uuid){
+        OfflinePlayer bPlayer = Bukkit.getOfflinePlayer(uuid);
+        if (bPlayer == null)
+            return false;
+        if (bPlayer.isOnline()){
+            Player player = (Player) bPlayer;
+            if (player.isOnline())
+                return true;
+        }
+        else{
+            if(bPlayer.hasPlayedBefore())
+                return true;
+        }
+        return false;
+    }
+
+
+    /**
+     * converts a string to float
+     * @param str string to convert
+     * @return returns parsed number or default
+     */
+    public static float parseFloat(String str, float default_value) {
+        if (str != null) {
+            try {
+                return Float.parseFloat(str);
+            } catch (Exception e) {
+                throw new NumberFormatException();
+            }
+        }
+        return default_value;
+    }
+
+    /**
+     * converts a string to int
+     * @param str string to convert
+     * @return returns parsed number or default
+     */
+    public static int parseInt(String str, int default_value) {
+        if (str != null) {
+            try {
+                return Integer.parseInt(str);
+            } catch (Exception e) {
+                throw new NumberFormatException();
+            }
+        }
+        return default_value;
+    }
+
+    /**
+     * converts a string to color
+     * @param str string to convert
+     * @return returns parsed color or default
+     */
+    public static Color parseColor(String str, Color default_value) {
+        if (str != null) {
+            try {
+                return Color.fromRGB(Integer.parseInt(str));
+
+            } catch (Exception e) {
+                throw new NumberFormatException();
+            }
+        }
+        return default_value;
+    }
+
+    /**
+     * converts a string to Potion effect
+     * @param str string to convert
+     * @return returns parsed number or default
+     */
+    public static PotionData parsePotionData(String str, PotionData default_value) {
+        if (str != null) {
+            str = str.toLowerCase();
+            for (PotionType pt : PotionType.values()) {
+                if (str.contains(pt.toString().toLowerCase())) {
+                    boolean extended = str.contains("long");
+                    boolean upgraded = str.contains("strong");
+                    return new PotionData(pt, extended, upgraded);
+                }
+            }
+        }
+        return default_value;
+    }
+
+    /**
+     * converts a string to float
+     * @param str string to convert
+     * @return returns parsed number or default
+     */
+    public static Particle parseParticle(String str, Particle default_value) {
+        if (str != null) {
+            for (Particle pt : Particle.values())
+                if (str.equalsIgnoreCase(pt.toString())){
+                    return pt;
+                }
+        }
+        return default_value;
+    }
+
+    /**
+     * converts a string to Itemstack
+     * @param str string to convert
+     * @return returns parsed number or default
+     */
+    public static ItemStack parseItemstack(String str, ItemStack default_value) {
+        if (str != null) {
+            for (Material mt : Material.values())
+                if (str.equalsIgnoreCase(mt.toString())){
+                    return new ItemStack(mt);
+                }
+        }
+        return default_value;
     }
 }
