@@ -2248,6 +2248,18 @@ public class Cannon
             if (gunpowder < 0)
                 gunpowder = 0;
             double chance  = tempInc * design.getOverloadingChangeInc()*Math.pow(gunpowder*design.getOverloadingChanceOfExplosionPerGunpowder(), design.getOverloadingExponent());
+
+/*
+			at.pavlov.cannons.Cannons.getPlugin().logInfo(
+				"Chance of explosion: " + (chance * 100.0) + "%: " +
+				"temp(" + tempInc + ") * " +
+				"change(" + design.getOverloadingChangeInc() + ") * " +
+				"( " +
+					"powder(" + gunpowder + ") * " +
+					"chance(" + design.getOverloadingChanceOfExplosionPerGunpowder() + ") " +
+				") ^ exp(" + design.getOverloadingExponent() + ")"
+			);
+*/
             return (chance <= 0) ? 0.0:chance;
         }
         else
@@ -2261,7 +2273,6 @@ public class Cannon
 	public boolean isExplodedDueOverloading()
 	{
         double chance = getOverloadingExplosionChance();
-        //Cannons.getPlugin().logDebug("Chance of explosion (overloading) = " + design.getOverloadingChangeInc() + " * ((" + loadedGunpowder + " ( may to be - " + design.getMaxLoadableGunpowder_Normal() + ")) * " + design.getOverloadingChanceOfExplosionPerGunpowder() + ") ^ " + design.getOverloadingExponent() + " (may to be multiplied by " + tempValue + " / " + design.getMaximumTemperature() + " = " + chance);
         if(Math.random()<chance)
             return true;
         return false;
