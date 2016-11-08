@@ -914,7 +914,7 @@ public class CreateExplosion {
         {
             teleLoc.setYaw(player.getLocation().getYaw());
             teleLoc.setPitch(player.getLocation().getPitch());
-            player.teleport(teleLoc);
+            player.teleport(teleLoc, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.ENDER_PEARL);
             player.setVelocity(new Vector(0,0,0));
             cannonball.setTeleported(true);
         }
