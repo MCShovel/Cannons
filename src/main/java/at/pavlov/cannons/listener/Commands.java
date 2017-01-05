@@ -136,8 +136,12 @@ public class Commands implements CommandExecutor
                             }
                             else
                             {
-                                sendMessage(sender, ChatColor.GREEN + "Player " + ChatColor.GOLD + args[1] + ChatColor.GREEN + " not found in the storage");
+                                sendMessage(sender, ChatColor.RED + "Player " + ChatColor.GOLD + args[1] + ChatColor.RED + " has no cannons.");
                             }
+                        }
+                        else
+                        {
+                            sendMessage(sender, ChatColor.RED + "Player " + ChatColor.GOLD + args[1] + ChatColor.RED + " not found");
                         }
                     }
                     else
@@ -460,6 +464,16 @@ public class Commands implements CommandExecutor
                             if (cannon.getOwner() != null && cannon.getOwner().equals(player.getUniqueId()))
                                 sendMessage(sender, ChatColor.GREEN + "Name:" + ChatColor.GOLD + cannon.getCannonName() + ChatColor.GREEN + " design:" +
                                         ChatColor.GOLD + cannon.getCannonDesign().getDesignName() + ChatColor.GREEN + " loc: " + ChatColor.GOLD + cannon.getOffset().toString());
+                        }
+                        //show cannon limit
+                        int buildlimit = plugin.getCannonManager().getCannonBuiltLimit(player);
+                        if (buildlimit < Integer.MAX_VALUE){
+                            int ncannon = plugin.getCannonManager().getNumberOfCannons(player.getUniqueId());
+                            int newcannons = buildlimit - ncannon;
+                            if (newcannons > 0)
+                                sendMessage(sender, ChatColor.GREEN + "You can build " + ChatColor.GOLD + newcannons + ChatColor.GREEN + " additional cannons");
+                            else
+                                sendMessage(sender, ChatColor.RED + "You reached your maximum number of cannons");
                         }
                     }
                     //cannons reset

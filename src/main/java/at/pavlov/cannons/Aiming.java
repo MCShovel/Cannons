@@ -16,10 +16,10 @@ import at.pavlov.cannons.event.CannonUseEvent;
 import at.pavlov.cannons.utils.CannonsUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.scoreboard.Team;
@@ -262,6 +262,9 @@ public class Aiming {
 				return null;
         }
 		else
+			//set homing finished flag
+			if (cannon.getCannonDesign().isSentry())
+				cannon.setSentryHomedAfterFiring(true);
             //no change in angle
             return null;
 	}
@@ -505,7 +508,7 @@ public class Aiming {
 				return;
 
 			// load from chest if the cannon is in automatic mode
-			if (!cannon.isLoaded() && !cannon.isLoading() && System.currentTimeMillis() > cannon.getSentryLastLoadingFailed() + 5000) {
+			if (!cannon.isLoaded() && !cannon.isLoading() && !cannon.isFiring() && System.currentTimeMillis() > cannon.getSentryLastLoadingFailed() + 5000) {
 				MessageEnum messageEnum = cannon.reloadFromChests(null, !cannon.getCannonDesign().isAmmoInfiniteForRedstone());
 				if (messageEnum.isError()) {
 					cannon.setSentryLastLoadingFailed(System.currentTimeMillis());
@@ -590,8 +593,7 @@ public class Aiming {
 						Bukkit.getServer().getPluginManager().callEvent(targetEvent);
 						if (!targetEvent.isCancelled()) {
 							cannon.setSentryEntity(target.getUniqueId());
-						}
-						else {
+						} else {
 							//event cancelled
 							plugin.logDebug("can't find solution for target");
 							cannon.setSentryEntity(null);
@@ -607,7 +609,7 @@ public class Aiming {
 
             //aim at the found solution
             // only update if since the last update some ticks have past (updateSpeed is in ticks = 50ms)
-            if (cannon.hasSentryEntity() && System.currentTimeMillis() >= cannon.getLastAimed() + cannon.getCannonDesign().getAngleUpdateSpeed()) {
+            if ((cannon.hasSentryEntity() || !cannon.isSentryHomedAfterFiring()) && System.currentTimeMillis() >= cannon.getLastAimed() + cannon.getCannonDesign().getAngleUpdateSpeed()) {
 				// autoaming or fineadjusting
 				if (cannon.isValid()) {
                     updateAngle(null, cannon, null, InteractAction.adjustSentry);
@@ -626,6 +628,13 @@ public class Aiming {
 					}
                 }
             }
+
+			//no targets found, return to default angles
+			if (!cannon.hasSentryEntity()){
+				cannon.setAimingYaw(cannon.getHomeYaw());
+				cannon.setAimingPitch(cannon.getHomePitch());
+				cannon.setSentryHomedAfterFiring(false);
+			}
         }
     }
 
@@ -657,7 +666,7 @@ public class Aiming {
 //            newTarget.add(targetVelocity.multiply(time));
 //        }
         //plugin.logDebug("new target " + newTarget);
-        if (!CannonsUtil.hasLineOfSight(cannon.getMuzzle(), target, 3)) {
+        if (!CannonsUtil.hasLineOfSight(cannon.getMuzzle(), target, 0)) {
             return false;
         }
 
@@ -709,7 +718,7 @@ public class Aiming {
 
         for (int i=0; i<100; i++){
 			Vector fvector = CannonsUtil.directionToVector(cannon.getAimingYaw(), cannon.getAimingPitch(), cannon.getCannonballVelocity());
-            double diffY = simulateShot(fvector, cannon.getMuzzle(), targetLoc, maxInterations);
+            double diffY = simulateShot(fvector, cannon.getMuzzle(), targetLoc, cannon.getProjectileEntityType(), maxInterations);
 
 			if (!cannon.getCannonDesign().isSentryIndirectFire() && Math.abs(diffY) > 1000.0){
 				// plugin.logDebug("diffY too large: " + diffY);
@@ -730,14 +739,16 @@ public class Aiming {
 			}
 
 			if (step < cannon.getCannonDesign().getAngleStepSize()) {
-				//can the cannon aim at this solution
-				if (addSpread){
-					Random rand = new Random();
-					cannon.setAimingPitch(cannon.getAimingPitch() + cannon.getCannonDesign().getSentrySpread()*rand.nextGaussian());
-					cannon.setAimingYaw(cannon.getAimingYaw() + cannon.getCannonDesign().getSentrySpread()*rand.nextGaussian());
-				}
-				if (cannon.canAimPitch(cannon.getAimingPitch()) && cannon.canAimYaw(cannon.getAimingYaw())) {
-					return true;
+				if (verifyTargetSolution(cannon, target, 2.)) {
+					//can the cannon aim at this solution
+					if (addSpread) {
+						Random rand = new Random();
+						cannon.setAimingPitch(cannon.getAimingPitch() + cannon.getCannonDesign().getSentrySpread() * rand.nextGaussian());
+						cannon.setAimingYaw(cannon.getAimingYaw() + cannon.getCannonDesign().getSentrySpread() * rand.nextGaussian());
+					}
+					if (cannon.canAimPitch(cannon.getAimingPitch()) && cannon.canAimYaw(cannon.getAimingYaw())) {
+						return true;
+					}
 				}
 				// can't aim at this solution
 				return false;
@@ -746,15 +757,56 @@ public class Aiming {
         return false;
     }
 
+	/**
+	 * verifies if the trajectory is blocked by terrain
+	 * @param cannon the firing cannon
+	 * @param target the target to fire at
+	 * @param maxdistance allowed distance of the target to the impact location
+     * @return true if the target is not blocked or close to the impact
+     */
+	private boolean verifyTargetSolution(Cannon cannon, Target target, double maxdistance){
+		Location muzzle = cannon.getMuzzle();
+		Vector vel = cannon.getTargetVector();
+
+		MovingObject predictor = new MovingObject(muzzle, vel, cannon.getProjectileEntityType());
+		Vector start = muzzle.toVector();
+
+		int maxInterations = 500;
+		double targetDist = 100000000000000.;
+
+		//make a few iterations until we hit something
+		for (int i=0;start.distance(predictor.getLoc()) < cannon.getCannonDesign().getSentryMaxRange()*1.2 && i < maxInterations; i++)
+		{
+			//is target distance shorter than before
+			double newDist = predictor.getLocation().distance(target.getCenterLocation());
+			if (newDist < targetDist){
+				targetDist = newDist;
+			}
+			else{
+				// missed the target
+				return true;
+			}
+			//see if we hit something, but wait until the cannonball is 1 block away (safety first)
+			Block block = predictor.getLocation().getBlock();
+			if (start.distance(predictor.getLoc()) > 1. && !block.isEmpty())
+			{
+				predictor.revertProjectileLocation(false);
+				return CannonsUtil.findSurface(predictor.getLocation(), predictor.getVel()).distance(target.getCenterLocation()) < maxdistance;
+			}
+			predictor.updateProjectileLocation(false);
+		}
+		return false;
+	}
+
     /**
-     * calculates the height of the proctile at the target distance
+     * calculates the height of the projectile at the target distance
      * @param vector firing vector
      * @param muzzle start point of the cannonball
      * @param target target for the cannonball
      * @return distance how much above/below the projectile will hit
      */
-    private double simulateShot(Vector vector, Location muzzle, Location target, int maxInterations){
-        MovingObject cannonball = new MovingObject(muzzle, vector);
+    private double simulateShot(Vector vector, Location muzzle, Location target, EntityType projectileType, int maxInterations){
+        MovingObject cannonball = new MovingObject(muzzle, vector, projectileType);
         double target_distance = Math.sqrt(Math.pow(target.getX() - muzzle.getX(), 2)+Math.pow(target.getZ()-muzzle.getZ(),2));
         Vector oldLoc = null;
         for (int i=0; i<500; i++){
@@ -1088,7 +1140,7 @@ public class Aiming {
         Location muzzle = cannon.getMuzzle();
         Vector vel = cannon.getFiringVector(false, false);
 
-        MovingObject predictor = new MovingObject(muzzle, vel);
+        MovingObject predictor = new MovingObject(muzzle, vel, cannon.getProjectileEntityType());
         Vector start = muzzle.toVector();
 
 
@@ -1106,7 +1158,7 @@ public class Aiming {
         }
 
         //nothing found
-        plugin.logDebug("impact predictor could not find the impact");
+        //plugin.logDebug("impact predictor could not find the impact");
         return null;
     }
 
@@ -1129,7 +1181,7 @@ public class Aiming {
             if (last.getValue()+design.getPredictorDelay() < System.currentTimeMillis())
             {
                 //reset the aiming so we have the do the next update after the update time
-                last.setValue(last.getValue() - design.getPredictorDelay() + design.getPredictorUpdate());
+                last.setValue(System.currentTimeMillis() - design.getPredictorDelay() + design.getPredictorUpdate());
 
                 //find all the watching players
                 HashMap<UUID, Boolean> nameList = cannon.getObserverMap();
@@ -1203,4 +1255,13 @@ public class Aiming {
     private GunAngles calctSentrySolution(Cannon cannon, Location target){
         return new GunAngles(0., 0.);
     }
+
+	/**
+	 * returns true if the player is currently in aiming mode
+	 * @param player the player in aiming mode
+	 * @return true if the player is in aiming mode
+     */
+	public boolean isInAimingMode(UUID player) {
+		return player != null && inAimingMode.containsKey(player);
+	}
 }

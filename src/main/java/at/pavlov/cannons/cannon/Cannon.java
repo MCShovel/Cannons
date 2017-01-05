@@ -13,6 +13,7 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -90,6 +91,8 @@ public class Cannon
     private long sentryLastLoadingFailed;
     // last time firing failed. Wait some time before trying again
     private long sentryLastFiringFailed;
+    // return to default angles after firing
+    private boolean sentryHomedAfterFiring;
 
     //target options for cannon
     private boolean targetMob;
@@ -1405,6 +1408,10 @@ public class Cannon
         return CannonsUtil.directionToVector(h, v, multi*randomness);
     }
 
+    /**
+     * returns the vector the cannon is currently aiming
+     * @return vector the cannon is aiming
+     */
     public Vector getAimingVector()
     {
         double multi = getCannonballVelocity();
@@ -1412,6 +1419,19 @@ public class Cannon
             multi = 0.1;
 
         return CannonsUtil.directionToVector(getTotalHorizontalAngle()  + CannonsUtil.directionToYaw(cannonDirection), -getTotalVerticalAngle(), multi);
+    }
+
+    /**
+     * returns the vector the cannon is currently targeting
+     * @return targeting vector
+     */
+    public Vector getTargetVector()
+    {
+        double multi = getCannonballVelocity();
+        if (multi < 0.1)
+            multi = 0.1;
+
+        return CannonsUtil.directionToVector(getAimingYaw(), getAimingPitch(), multi);
     }
 
     /**
@@ -2074,6 +2094,22 @@ public class Cannon
     }
 
     /**
+     * get the default horizontal home position of the cannon
+     * @return default horizontal home position
+     */
+    public double getHomeYaw(){
+        return getHomeHorizontalAngle() + CannonsUtil.directionToYaw(cannonDirection);
+    }
+
+    /**
+     * get the default vertical home position of the cannon
+     * @return default vertical home position
+     */
+    public double getHomePitch(){
+        return getHomeVerticalAngle();
+    }
+
+    /**
      * if the cannon has the target in sight and angles are set correctly
      * @return true if aiminig is finished
      */
@@ -2453,12 +2489,29 @@ public class Cannon
         this.targetCannon = !this.targetCannon;
     }
 
-
     public boolean isPaid() {
         return paid;
     }
 
     public void setPaid(boolean paid) {
         this.paid = paid;
+    }
+
+    public EntityType getProjectileEntityType(){
+        if (loadedProjectile != null){
+            return loadedProjectile.getProjectileEntity();
+        }
+        if (lastFiredProjectile != null){
+            return lastFiredProjectile.getProjectileEntity();
+        }
+        return EntityType.SNOWBALL;
+    }
+
+    public boolean isSentryHomedAfterFiring() {
+        return sentryHomedAfterFiring;
+    }
+
+    public void setSentryHomedAfterFiring(boolean sentryHomedAfterFiring) {
+        this.sentryHomedAfterFiring = sentryHomedAfterFiring;
     }
 }

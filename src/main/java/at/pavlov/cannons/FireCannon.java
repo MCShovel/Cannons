@@ -376,14 +376,16 @@ public class FireCannon {
     {
         double minDist = config.getImitatedBlockMinimumDistance();
         double maxDist = config.getImitatedBlockMaximumDistance();
+        float maxVol = config.getImitatedSoundMaximumVolume();
         Location loc = c.getMuzzle();
 
         //simple particle effects for close distance
-        loc.getWorld().createExplosion(loc, 0F, false);
+        //loc.getWorld().createExplosion(loc, 0F, false);
+        loc.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, loc, 0);
 
         //fake blocks effects for far distance
         int maxSoundDist = config.getImitatedSoundMaximumDistance();
-        CannonsUtil.imitateSound(loc, c.getCannonDesign().getSoundFiring(), maxSoundDist);
+        CannonsUtil.imitateSound(loc, c.getCannonDesign().getSoundFiring(), maxSoundDist, maxVol);
 
         List<Player> players = new ArrayList<Player>();
         for(Player p : loc.getWorld().getPlayers())

@@ -567,25 +567,34 @@ public class CannonsUtil
      * @param sound sound
      * @param maxDist maximum distance
      */
-    public static void imitateSound(Location loc, SoundHolder sound, int maxDist)
+    public static void imitateSound(Location loc, SoundHolder sound, int maxDist, float maxVolume)
     {
         //https://forums.bukkit.org/threads/playsound-parameters-volume-and-pitch.151517/
         World w = loc.getWorld();
-        w.playSound(loc, sound.getSound(), 15F, sound.getPitch());
+        //w.playSound(loc, sound.getSound(), maxVolume*16f, sound.getPitch());
+        maxVolume = Math.max(0.0f, Math.min(0.95f, maxVolume));
 
         for(Player p : w.getPlayers())
         {
         	Location pl = p.getLocation();
             //readable code
             Vector v = loc.clone().subtract(pl).toVector();
-            double d = v.length();
+            float d = (float) v.length();
             if(d<=maxDist)
             {
-
                 //float volume = 2.1f-(float)(d/maxDist);
-                float newPitch = sound.getPitch()/(float) Math.sqrt(d);
+                //float newPitch = sound.getPitch()/(float) Math.sqrt(d);
+                float newPitch = sound.getPitch();
                 //p.playSound(p.getEyeLocation().add(v.normalize().multiply(16)), sound, volume, newPitch);
-                p.playSound(loc, sound.getSound(), maxDist/16f, newPitch);
+                //https://bukkit.org/threads/playsound-parameters-volume-and-pitch.151517/
+                float maxv = d/(1-maxVolume)/16f;
+                maxv = Math.max(maxv, maxVolume);
+                float setvol = Math.min(maxv, (float)maxDist/16f);
+                //System.out.println("distance: " + d + "maxv: " + maxv + " (float)maxDist/16f: " + (float)maxDist/16f + " setvol: " + setvol);
+                if (sound.isSoundEnum())
+                    p.playSound(loc, sound.getSoundEnum(), setvol, newPitch);
+                if (sound.isSoundString())
+                    p.playSound(loc, sound.getSoundString(), setvol, newPitch);
             }
         }
     }
@@ -645,8 +654,10 @@ public class CannonsUtil
         if (!sound.isValid())
             return;
 
-        loc.getWorld().playSound(loc,sound.getSound(),sound.getVolume(),sound.getPitch());
-
+        if (sound.isSoundString())
+            loc.getWorld().playSound(loc, sound.getSoundString(), sound.getVolume(), sound.getPitch());
+        if (sound.isSoundEnum())
+            loc.getWorld().playSound(loc, sound.getSoundEnum(), sound.getVolume(), sound.getPitch());
     }
 
     /**
@@ -693,7 +704,8 @@ public class CannonsUtil
      * @return true if there is a line of sight
      */
     public static boolean hasLineOfSight(Location start, Location stop, int ignoredBlocks){
-        BlockIterator iter = new BlockIterator(start.getWorld(), start.clone().toVector(), stop.clone().subtract(start).toVector().normalize(), 0, (int) start.distance(stop));
+        Vector dir =  stop.clone().subtract(start).toVector().normalize();
+        BlockIterator iter = new BlockIterator(start.getWorld(), start.clone().add(dir).toVector(),dir, 0, (int) start.distance(stop));
 
         int nontransparent = 0;
         while (iter.hasNext()) {
@@ -703,6 +715,7 @@ public class CannonsUtil
                 nontransparent ++;
             }
         }
+        //System.out.println("non transperent blocks: " + nontransparent);
         return nontransparent <= ignoredBlocks;
     }
 
