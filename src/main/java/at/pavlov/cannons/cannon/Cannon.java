@@ -1568,7 +1568,7 @@ public class Cannon
                 return bPlayer.getName();
             case 2 :
                 // loaded Gunpowder/Projectile
-                if (loadedProjectile != null) return "p: " + loadedGunpowder + " c: " + loadedProjectile.toString();
+                if (loadedProjectile != null) return "p: " + loadedGunpowder + " c: " + loadedProjectile.getMaterialInformation();
                 else return "p: " + loadedGunpowder + " c: " + "0:0";
             case 3 :
                 // angles
@@ -2495,6 +2495,13 @@ public class Cannon
 
     public void setPaid(boolean paid) {
         this.paid = paid;
+    }
+
+    public void boughtByPlayer(UUID playerID){
+        setPaid(true);
+        setOwner(playerID);
+        whitelist.clear();
+        whitelist.add(playerID);
     }
 
     public EntityType getProjectileEntityType(){

@@ -7,11 +7,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import at.pavlov.cannons.Cannons;
 import at.pavlov.cannons.Enum.BreakCause;
 import at.pavlov.cannons.container.MaterialHolder;
+import at.pavlov.cannons.dao.LoadWhitelistTask;
 import at.pavlov.cannons.event.CannonDestroyedEvent;
 import at.pavlov.cannons.utils.CannonsUtil;
 import at.pavlov.cannons.utils.DelayedTask;
 import at.pavlov.cannons.utils.RemoveTaskWrapper;
-import net.milkbowl.vault.economy.EconomyResponse;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -215,7 +215,7 @@ public class CannonManager
                     userMessages.sendMessage(message, player, cannon);
 
                 //remove from database
-                plugin.getPersistenceDatabase().deleteCannonAsync(cannon.getUID());
+                plugin.getPersistenceDatabase().deleteCannon(cannon.getUID());
                 //remove cannon name
                 cannonNameMap.remove(cannon.getCannonName());
                 //remove sentry
@@ -332,10 +332,12 @@ public class CannonManager
         if (cannon.getCannonDesign().isSentry())
             plugin.getAiming().addSentryCannon(cannon.getUID());
 
-        plugin.getPersistenceDatabase().saveCannonAsync(cannon);
+        plugin.getPersistenceDatabase().saveCannon(cannon);
         plugin.logDebug("added cannon " + cannon.getCannonName());
 		
 		cannon.updateCannonSigns();
+        LoadWhitelistTask loadWhitelistTask = new LoadWhitelistTask(cannon.getUID());
+        loadWhitelistTask.runTaskAsynchronously(plugin);
 	}
 
     /**
@@ -462,7 +464,7 @@ public class CannonManager
 	/**
 	 * searches for a cannon and creates a new entry if it does not exist
 	 * @param cannonBlock - one block of the cannon
-	 * @param owner - the owner of the cannon (important for message notification). Can't be null
+	 * @param owner - the owner of the cannon (important for message notification). Can't be null if a new cannon is created
 	 * @return the cannon at this location
 	 */
 	public Cannon getCannon(Location cannonBlock, UUID owner)
@@ -806,8 +808,14 @@ public class CannonManager
 
         while (iter.hasNext())
         {
-            Cannon next = iter.next();
-            next.destroyCannon(false, false, BreakCause.Other);
+            Cannon cannon = iter.next();
+            OfflinePlayer offplayer = Bukkit.getOfflinePlayer(cannon.getOwner());
+            // return money to the player if the cannon was paid
+            if (offplayer != null && offplayer.hasPlayedBefore() && plugin.getEconomy() != null) {
+                if (cannon.isPaid())
+                    plugin.getEconomy().depositPlayer(offplayer, cannon.getCannonDesign().getEconomyBuildingCost());
+            }
+            cannon.destroyCannon(false, false, BreakCause.Other);
             iter.remove();
         }
     }

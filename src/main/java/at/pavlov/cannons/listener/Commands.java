@@ -86,7 +86,7 @@ public class Commands implements CommandExecutor
                     if (player == null || player.hasPermission("cannons.admin.reload"))
                     {
                         // save database
-                        persistenceDatabase.saveAllCannonsAsync();
+                        persistenceDatabase.saveAllCannons(true);
                         sendMessage(sender, ChatColor.GREEN + "Cannons database saved ");
                     }
                     else
@@ -99,7 +99,7 @@ public class Commands implements CommandExecutor
                     if (player == null || player.hasPermission("cannons.admin.reload"))
                     {
                         // load database
-                        persistenceDatabase.loadCannonsAsync();
+                        persistenceDatabase.loadCannons();
                         sendMessage(sender, ChatColor.GREEN + "Cannons database loaded ");
                     }
                     else
@@ -117,7 +117,7 @@ public class Commands implements CommandExecutor
                             (args[1].equals("all_players") && (offallplayers==null || !offallplayers.hasPlayedBefore()))))
                     {
                         //remove all cannons
-                        persistenceDatabase.deleteAllCannonsAsync();
+                        persistenceDatabase.deleteAllCannons();
                         plugin.getCannonManager().deleteAllCannons();
                         sendMessage(sender, ChatColor.GREEN + "All cannons have been deleted");
                     }
@@ -128,7 +128,7 @@ public class Commands implements CommandExecutor
                         if (offplayer != null && offplayer.hasPlayedBefore())
                         {
                             boolean b1 = plugin.getCannonManager().deleteCannons(offplayer.getUniqueId());
-                            persistenceDatabase.deleteCannonsAsync(offplayer.getUniqueId());
+                            persistenceDatabase.deleteCannons(offplayer.getUniqueId());
                             if (b1)
                             {
                                 //there was an entry in the list
@@ -485,7 +485,7 @@ public class Commands implements CommandExecutor
                             return true;
                         }
                         // delete all cannon entries for this player
-                        persistenceDatabase.deleteCannonsAsync(player.getUniqueId());
+                        persistenceDatabase.deleteCannons(player.getUniqueId());
                         plugin.getCannonManager().deleteCannons(player.getUniqueId());
                         userMessages.sendMessage(MessageEnum.CannonsReseted, player);
                     }
@@ -693,17 +693,29 @@ public class Commands implements CommandExecutor
                     break;
                 }
                 case WHITELIST_ADD:{
-                    cannon.addWhitelistPlayer(whitelistPlayer.get(player.getUniqueId()));
-                    whitelistPlayer.remove(player.getUniqueId());
-                    userMessages.sendMessage(MessageEnum.CmdAddedWhitelist, player, cannon);
-                    CannonsUtil.playSound(cannon.getMuzzle(), cannon.getCannonDesign().getSoundSelected());
+                    if (!cannon.getCannonDesign().isSentry()){
+                        userMessages.sendMessage(MessageEnum.CmdNoSentryWhitelist, player, cannon);
+                        CannonsUtil.playErrorSound(cannon.getMuzzle());
+                    }
+                    else {
+                        cannon.addWhitelistPlayer(whitelistPlayer.get(player.getUniqueId()));
+                        whitelistPlayer.remove(player.getUniqueId());
+                        userMessages.sendMessage(MessageEnum.CmdAddedWhitelist, player, cannon);
+                        CannonsUtil.playSound(cannon.getMuzzle(), cannon.getCannonDesign().getSoundSelected());
+                    }
                     break;
                 }
                 case WHITELIST_REMOVE:{
-                    cannon.removeWhitelistPlayer(whitelistPlayer.get(player.getUniqueId()));
-                    whitelistPlayer.remove(player.getUniqueId());
-                    userMessages.sendMessage(MessageEnum.CmdRemovedWhitelist, player, cannon);
-                    CannonsUtil.playSound(cannon.getMuzzle(), cannon.getCannonDesign().getSoundSelected());
+                    if (!cannon.getCannonDesign().isSentry()){
+                        userMessages.sendMessage(MessageEnum.CmdNoSentryWhitelist, player, cannon);
+                        CannonsUtil.playErrorSound(cannon.getMuzzle());
+                    }
+                    else {
+                        cannon.removeWhitelistPlayer(whitelistPlayer.get(player.getUniqueId()));
+                        whitelistPlayer.remove(player.getUniqueId());
+                        userMessages.sendMessage(MessageEnum.CmdRemovedWhitelist, player, cannon);
+                        CannonsUtil.playSound(cannon.getMuzzle(), cannon.getCannonDesign().getSoundSelected());
+                    }
                     break;
                 }
                 case TARGET_MOB:{
@@ -756,7 +768,7 @@ public class Commands implements CommandExecutor
                                 CannonsUtil.playErrorSound(cannon.getMuzzle());
                             }
                             else {
-                                cannon.setPaid(true);
+                                cannon.boughtByPlayer(player.getUniqueId());
                                 //CannonsUtil.playSound();
                                 userMessages.sendMessage(MessageEnum.CmdPaidCannon, player, cannon);
                                 CannonsUtil.playSound(cannon.getMuzzle(), cannon.getCannonDesign().getSoundSelected());

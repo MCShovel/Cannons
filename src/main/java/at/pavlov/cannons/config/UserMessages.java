@@ -5,7 +5,6 @@ import java.util.*;
 
 import at.pavlov.cannons.Enum.MessageEnum;
 import at.pavlov.cannons.projectile.Projectile;
-import com.avaje.ebean.enhance.ant.OfflineFileTransform;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -351,11 +350,12 @@ public class UserMessages {
 				List<String> names = new ArrayList<String>();
 				for (UUID playerUID : cannon.getWhitelist()){
 					OfflinePlayer offplayer = Bukkit.getOfflinePlayer(playerUID);
-					if (offplayer != null)
+					if (offplayer != null) {
 						names.add(offplayer.getName());
+					}
 				}
 				if (names.size() > 0)
-					message = message.replace("WHITELIST", "\n " + ChatColor.GOLD + "  - " + StringUtils.join(names,  "\n " + ChatColor.GOLD + "  - "));
+					message = message.replace("WHITELIST", "\n " + ChatColor.GOLD + "  - " + StringUtils.join(names, "\n " + ChatColor.GOLD + "  - "));
 				else
 					message = message.replace("WHITELIST", ChatColor.GOLD + "none");
 			}
